@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumidor AI Pro</title>
+    <!-- Nueva Fuente: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ============================================== -->
+    <!--           NUEVO DISEÑO COMPLETO (CSS)          -->
+    <!-- ============================================== -->
+    <style>
+        :root {
+            --primary-color-dark: #4338ca;
+            --primary-color: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --secondary-color: #10b981;
+            --text-light: #f9fafb;
+            --text-dark: #111827;
+            --card-background: rgba(255, 255, 255, 0.75);
+            --border-color: rgba(255, 255, 255, 0.3);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 200% 200%;
+            animation: gradient-animation 15s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-background);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            padding: 3rem;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(45deg, var(--primary-color-dark), #3b0764);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-top: 0.5rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        textarea, select {
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #d1d5db;
+            background-color: #f9fafb;
+            transition: all 0.2s ease-in-out;
+        }
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+            background-color: white;
+        }
+        textarea { resize: vertical; min-height: 200px; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--primary-color-dark));
+            color: var(--text-light);
+            box-shadow: 0 4px 15px -5px var(--primary-glow);
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 7px 20px -5px var(--primary-glow);
+        }
+        .btn:disabled, .is-processing {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #d1d5db;
+            pointer-events: none;
+        }
+
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.4); border-radius: 50%; border-top-color: var(--text-light); animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .resultado {
+            margin-top: 2.5rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .resultado h2 {
+            font-weight: 600;
+            color: var(--primary-color-dark);
+        }
+        .resultado p {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            line-height: 1.8;
+            color: #374151;
+        }
+
+        .action-buttons { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; }
+        .btn-action {
+            flex-grow: 1;
+            background-color: #4b5563;
+            color: var(--text-light);
+            box-shadow: 0 4px 15px -5px rgba(75, 85, 99, 0.4);
+        }
+        .btn-action:hover:not(:disabled) {
+             background-color: #1f2937;
+             box-shadow: 0 7px 20px -5px rgba(75, 85, 99, 0.6);
+        }
+        .btn-audio { background-color: var(--secondary-color); }
+        .btn-audio:hover:not(:disabled) { background-color: var(--secondary-hover); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Resumidor AI Pro</h1>
+            <p>Transforma información en conocimiento al instante.</p>
+        </header>
+
+        <form id="summarize-form" action="/" method="post">
+            <div class="form-group">
+                <label for="texto">Introduce tu contenido o URL</label>
+                <textarea name="texto" id="texto" placeholder="Pega aquí un artículo completo o una URL como https://es.wikipedia.org/wiki/Inteligencia_artificial">{{ texto_original }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="language">Generar resumen en:</label>
+                <select name="language" id="language">
+                    <option value="Spanish" {% if idioma_seleccionado == 'Spanish' %}selected{% endif %}>Español</option>
+                    <option value="English" {% if idioma_seleccionado == 'English' %}selected{% endif %}>Inglés</option>
+                    <option value="French"  {% if idioma_seleccionado == 'French' %}selected{% endif %}>Francés</option>
+                    <option value="Italian" {% if idioma_seleccionado == 'Italian' %}selected{% endif %}>Italiano</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="summarize-btn">
+                <span id="summarize-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.7 4.3a9 9 0 1 0-7.4 15.4"/><path d="m15.7 4.3 2.1 2.1"/><path d="M8.2 12.8 12 18l6-8"/><path d="m12.5 7.5-1-1"/></svg></span>
+                <span id="summarize-btn-text">Crear Resumen</span>
+            </button>
+        </form>
+
+        {% if resumen %}
+        <div class="resultado">
+            <h2>Tu Resumen Inteligente</h2>
+            <p id="summary-text">{{ resumen }}</p>
+            <div class="action-buttons">
+                <button class="btn btn-action btn-audio" id="read-aloud-btn">
+                     <span id="audio-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
+                     <span id="audio-btn-text">Escuchar</span>
+                </button>
+                <button class="btn btn-action" id="copy-summary-btn">
+                    <span id="copy-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
+                    <span id="copy-btn-text">Copiar</span>
+                </button>
+                <button class="btn btn-action" id="download-audio-btn">
+                    <span id="download-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+                    <span id="download-btn-text">Descargar</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Lógica de deshabilitar formulario al enviar
+        const summarizeForm = document.getElementById('summarize-form');
+        if (summarizeForm) {
+            const summarizeBtn = document.getElementById('summarize-btn');
+            const mainTextarea = document.getElementById('texto');
+            const mainLanguageSelect = document.getElementById('language');
+            
+            summarizeForm.addEventListener('submit', (event) => {
+                if (mainTextarea.value.trim() === '') {
+                    event.preventDefault();
+                    alert('Por favor, introduce un texto o una URL para resumir.');
+                    return;
+                }
+                summarizeBtn.disabled = true;
+                mainTextarea.readOnly = true;
+                mainTextarea.classList.add('is-processing');
+                mainLanguageSelect.classList.add('is-processing');
+                summarizeBtn.querySelector('#summarize-btn-text').textContent = 'Generando...';
+                summarizeBtn.querySelector('#summarize-btn-icon').innerHTML = '<div class="spinner"></div>';
+            });
+        }
+        
+        // El resto del JavaScript para los botones de acción no necesita cambios funcionales,
+        // pero se beneficiará de la nueva estética de los botones y spinners.
+        const summaryTextElement = document.getElementById('summary-text');
+        const languageSelect = document.getElementById('language');
+        const readAloudButton = document.getElementById('read-aloud-btn');
+        if (readAloudButton) {
+            let audio = null;
+            const audioBtnIcon = document.getElementById('audio-btn-icon');
+            const audioBtnText = document.getElementById('audio-btn-text');
+            const iconPlay = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+            const iconLoading = '<div class="spinner" style="border-top-color: var(--secondary-color);"></div>';
+            const iconStop = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"></rect></svg>';
+
+            function stopAudio() {
+                if (audio) { audio.pause(); audio.currentTime = 0; audio = null; }
+                audioBtnIcon.innerHTML = iconPlay;
+                audioBtnText.textContent = 'Escuchar';
+                readAloudButton.disabled = false;
+            }
+
+            readAloudButton.addEventListener('click', () => {
+                if (audio && !audio.paused) { stopAudio(); return; }
+                const textToSpeak = summaryTextElement.textContent;
+                const selectedLanguage = languageSelect.value;
+                const encodedText = encodeURIComponent(textToSpeak);
+                const encodedLang = encodeURIComponent(selectedLanguage);
+                readAloudButton.disabled = true;
+                audioBtnIcon.innerHTML = iconLoading;
+                audioBtnText.textContent = 'Cargando';
+                audio = new Audio(`/speak?text=${encodedText}&lang=${encodedLang}`);
+                audio.addEventListener('canplaythrough', () => { if (audio) audio.play(); });
+                audio.addEventListener('play', () => { readAloudButton.disabled = false; audioBtnIcon.innerHTML = iconStop; audioBtnText.textContent = 'Detener'; });
+                audio.addEventListener('ended', stopAudio);
+                audio.addEventListener('error', () => { alert('Error al cargar el audio.'); stopAudio(); });
+            });
+        }
+        
+        const copyBtn = document.getElementById('copy-summary-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(summaryTextElement.textContent).then(() => {
+                    const originalText = copyBtn.querySelector('span:last-child').textContent;
+                    copyBtn.querySelector('span:last-child').textContent = '¡Copiado!';
+                    setTimeout(() => { copyBtn.querySelector('span:last-child').textContent = originalText; }, 2000);
+                }).catch(err => { alert('No se pudo copiar el texto.'); });
+            });
+        }
+
+        const downloadBtn = document.getElementById('download-audio-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const textToSpeak = summaryTextElement.textContent;
+                const selectedLanguage = languageSelect.value;
+                const encodedText = encodeURIComponent(textToSpeak);
+                const encodedLang = encodeURIComponent(selectedLanguage);
+                const downloadUrl = `/download_audio?text=${encodedText}&lang=${encodedLang}`;
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = 'resumen.mp3';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    });
+    </script>
+</body>
+</html>
