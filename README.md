@@ -1,17 +1,25 @@
-# Resumidor de Textos con Conversión a Audio
+# Resumidor de Textos Multilingüe con Voz
 
 ![Python](https://img.shields.io/badge/python-3.7+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Una aplicación web que permite resumir textos y convertirlos a audio en diferentes idiomas (español, inglés, francés e italiano). La aplicación puede procesar tanto texto directo como extraer contenido de URLs.
+Una potente aplicación web que transforma textos extensos en resúmenes concisos y los convierte a voz natural en 4 idiomas: español, inglés, francés e italiano. Ideal para estudiantes, investigadores o cualquiera que necesite procesar información rápidamente. La aplicación puede extraer contenido directamente de URLs o procesar texto ingresado manualmente, ofreciendo una experiencia de aprendizaje auditivo en el idioma de tu preferencia.
 
 ## Características
 
-- Resumen de textos en múltiples idiomas
-- Conversión de texto a voz
-- Soporte para entrada de texto directo o desde URL
-- Interfaz web intuitiva
-- Fácil de usar y configurar
+- **Resumen de textos** en múltiples idiomas (español, inglés, francés e italiano)
+- **Conversión de texto a voz** en el mismo idioma del resumen
+- **Soporte para 4 idiomas** en la generación de voz:
+  - Español (voz natural)
+  - Inglés (voz natural)
+  - Francés (voz natural)
+  - Italiano (voz natural)
+- **Múltiples formatos de entrada**:
+  - Texto directo
+  - Extracción de contenido desde URL
+- Interfaz web intuitiva y fácil de usar
+- Reproducción de audio directamente en el navegador
+- Control de reproducción para pausar, reanudar o detener la reproducción
 
 ## Requisitos
 
