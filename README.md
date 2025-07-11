@@ -2,6 +2,8 @@
 
 ![Python](https://img.shields.io/badge/python-3.7+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Ollama](https://img.shields.io/badge/Powered%20by-Ollama-FFD43B.svg)
+![Gemma](https://img.shields.io/badge/Model-Gemma%203%204B%20QAT-7950F3.svg)
 
 Una potente aplicación web que transforma textos extensos en resúmenes concisos y los convierte a voz natural en 4 idiomas: español, inglés, francés e italiano. Ideal para estudiantes, investigadores o cualquiera que necesite procesar información rápidamente. La aplicación puede extraer contenido directamente de URLs o procesar texto ingresado manualmente, ofreciendo una experiencia de aprendizaje auditivo en el idioma de tu preferencia.
 
@@ -24,8 +26,27 @@ Una potente aplicación web que transforma textos extensos en resúmenes conciso
 ## Requisitos
 
 - Python 3.7 o superior
-- Conexión a Internet (para ciertas funcionalidades)
+- [Ollama](https://ollama.ai/) instalado y en ejecución
+- Modelo Gemma 3 4B QAT descargado (se descargará automáticamente la primera vez que se use)
+- Conexión a Internet (para la descarga inicial del modelo y ciertas funcionalidades)
 - Navegador web moderno
+
+## Modelo de Lenguaje
+
+Esta aplicación utiliza **Gemma 3 4B IT QAT** (Quantization-Aware Training) a través de Ollama, lo que permite:
+
+- **Alta calidad** en la generación de resúmenes
+- **Eficiencia** gracias a la cuantización que optimiza el rendimiento
+- **Funcionamiento local** para mayor privacidad de los datos
+- **Soporte multilingüe** con excelentes resultados en español, inglés, francés e italiano
+
+Para usar la aplicación, asegúrate de tener Ollama instalado y en ejecución. El modelo se descargará automáticamente la primera vez que lo uses.
+
+### Instalación de Ollama
+
+1. Descarga e instala Ollama desde [https://ollama.ai/](https://ollama.ai/)
+2. Inicia el servicio de Ollama
+3. La primera vez que ejecutes la aplicación, descargará automáticamente el modelo `gemma3:4b-it-qat`
 
 ## Instalación
 
@@ -83,6 +104,7 @@ Una potente aplicación web que transforma textos extensos en resúmenes conciso
 - `templates/` - Plantillas HTML
 - `static/` - Archivos estáticos (CSS, JS, audios)
 - `requirements.txt` - Dependencias del proyecto
+- `arrancar.bat` - Lanzador para Windows que asegura que Ollama esté en ejecución
 
 ## Licencia
 
