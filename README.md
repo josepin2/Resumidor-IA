@@ -49,21 +49,37 @@ Una potente aplicación web que transforma textos extensos en resúmenes conciso
 
 ## Uso
 
-1. Inicia la aplicación:
+### Opción 1: Usando el lanzador de Windows (recomendado para usuarios de Windows)
+
+1. Simplemente haz doble clic en el archivo `arrancar.bat`
+2. El script hará lo siguiente automáticamente:
+   - Verificará el entorno virtual
+   - Lo activará si es necesario
+   - Abrirá tu navegador predeterminado en la dirección correcta
+   - Iniciará el servidor Flask
+
+### Opción 2: Método manual
+
+1. Inicia la aplicación manualmente:
    ```bash
    python app.py
    ```
 
 2. Abre tu navegador y ve a:
    ```
-   http://localhost:5000
+   http://localhost:5001
    ```
 
-3. Selecciona el idioma, ingresa tu texto o URL y haz clic en "Resumir".
+### Para todos los métodos:
+- Selecciona el idioma deseado
+- Ingresa tu texto o URL
+- Haz clic en "Resumir"
+- Escucha el audio del resumen usando los controles de reproducción
 
 ## Estructura del Proyecto
 
 - `app.py` - Aplicación principal de Flask
+- `arrancar.bat` - Lanzador automático para Windows (configura el entorno y abre el navegador)
 - `templates/` - Plantillas HTML
 - `static/` - Archivos estáticos (CSS, JS, audios)
 - `requirements.txt` - Dependencias del proyecto
