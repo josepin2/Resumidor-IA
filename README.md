@@ -123,3 +123,14 @@ Las contribuciones son bienvenidas. Por favor, lee nuestras pautas de contribuci
 ## Contacto
 
 Si tienes preguntas o sugerencias, no dudes en abrir un issue en el repositorio.
+
+## Cambios recientes
+
+Versión `v1.1.0` — 2025-11-07
+- Actualización del modelo a `gemma3:12b-it-qat` (más calidad en resúmenes).
+- Soporte de voz ampliado a 8 idiomas (incluye Portugués, Alemán, Japonés y Chino).
+- Endpoints de TTS:
+  - `/speak`: reproducción directa (Edge TTS o Azure si hay credenciales).
+  - `/download_audio`: descarga del audio (Edge TTS; fallback a gTTS).
+- Documentación mejorada en README y notas en `requirements.txt`.
+- UI renovada con nuevo diseño y selector de voz.
