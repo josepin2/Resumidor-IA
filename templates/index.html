@@ -196,6 +196,10 @@
                     <option value="English" {% if idioma_seleccionado == 'English' %}selected{% endif %}>Inglés</option>
                     <option value="French"  {% if idioma_seleccionado == 'French' %}selected{% endif %}>Francés</option>
                     <option value="Italian" {% if idioma_seleccionado == 'Italian' %}selected{% endif %}>Italiano</option>
+                    <option value="Portuguese" {% if idioma_seleccionado == 'Portuguese' %}selected{% endif %}>Portugués</option>
+                    <option value="German" {% if idioma_seleccionado == 'German' %}selected{% endif %}>Alemán</option>
+                    <option value="Japanese" {% if idioma_seleccionado == 'Japanese' %}selected{% endif %}>Japonés</option>
+                    <option value="Chinese" {% if idioma_seleccionado == 'Chinese' %}selected{% endif %}>Chino</option>
                 </select>
             </div>
             
@@ -209,6 +213,12 @@
         <div class="resultado">
             <h2>Tu Resumen Inteligente</h2>
             <p id="summary-text">{{ resumen }}</p>
+            <div class="form-group" id="voice-select-group">
+                <label for="edge-voice">Voz (Edge)</label>
+                <select id="edge-voice" class="edge-voice-select" disabled>
+                    <option value="">Cargando voces…</option>
+                </select>
+            </div>
             <div class="action-buttons">
                 <button class="btn btn-action btn-audio" id="read-aloud-btn">
                      <span id="audio-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
@@ -222,6 +232,8 @@
                     <span id="download-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
                     <span id="download-btn-text">Descargar</span>
                 </button>
+                <span id="download-status" style="margin-left: 8px; color: #ef4444; display: none;">Servidor TTS no disponible</span>
+                <span id="tts-provider" style="margin-left: 8px; color: #6b7280; display: inline;">Proveedor TTS: comprobando…</span>
             </div>
         </div>
         {% endif %}
@@ -266,17 +278,228 @@
         // pero se beneficiará de la nueva estética de los botones y spinners.
         const summaryTextElement = document.getElementById('summary-text');
         const languageSelect = document.getElementById('language');
+        const voiceSelect = document.getElementById('edge-voice');
         const readAloudButton = document.getElementById('read-aloud-btn');
         if (readAloudButton) {
             let audio = null;
+            let speechUtterance = null;
+            let speakingWithBrowser = false;
+            let availableVoices = [];
             const audioBtnIcon = document.getElementById('audio-btn-icon');
             const audioBtnText = document.getElementById('audio-btn-text');
             const iconPlay = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
             const iconLoading = '<div class="spinner" style="border-top-color: var(--secondary-color);"></div>';
             const iconStop = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"></rect></svg>';
 
+            const localeMap = {
+                'Spanish': 'es-ES',
+                'English': 'en-US',
+                'French': 'fr-FR',
+                'Italian': 'it-IT',
+                'Portuguese': 'pt-BR',
+                'German': 'de-DE',
+                'Japanese': 'ja-JP',
+                'Chinese': 'zh-CN'
+            };
+            const languageLocales = {
+                'Spanish': ['es-ES', 'es-MX', 'es-US'],
+                'English': ['en-US', 'en-GB', 'en-AU', 'en-CA'],
+                'French': ['fr-FR', 'fr-CA'],
+                'Italian': ['it-IT'],
+                'Portuguese': ['pt-BR', 'pt-PT'],
+                'German': ['de-DE', 'de-AT', 'de-CH'],
+                'Japanese': ['ja-JP'],
+                'Chinese': ['zh-CN', 'zh-TW']
+            };
+            const countryNames = {
+                'es-es': 'España',
+                'es-mx': 'México',
+                'es-us': 'Estados Unidos',
+                'en-us': 'Estados Unidos',
+                'en-gb': 'Reino Unido',
+                'en-au': 'Australia',
+                'en-ca': 'Canadá',
+                'fr-fr': 'Francia',
+                'fr-ca': 'Canadá',
+                'it-it': 'Italia',
+                'pt-br': 'Brasil',
+                'pt-pt': 'Portugal',
+                'de-de': 'Alemania',
+                'de-at': 'Austria',
+                'de-ch': 'Suiza',
+                'ja-jp': 'Japón',
+                'zh-cn': 'China',
+                'zh-tw': 'Taiwán'
+            };
+            function flagEmojiForLocale(locale) {
+                const key = (locale || '').toLowerCase();
+                const map = {
+                    'es-es': '🇪🇸',
+                    'es-mx': '🇲🇽',
+                    'es-us': '🇺🇸',
+                    'en-us': '🇺🇸',
+                    'en-gb': '🇬🇧',
+                    'en-au': '🇦🇺',
+                    'en-ca': '🇨🇦',
+                    'fr-fr': '🇫🇷',
+                    'fr-ca': '🇨🇦',
+                    'it-it': '🇮🇹',
+                    'pt-br': '🇧🇷',
+                    'pt-pt': '🇵🇹',
+                    'de-de': '🇩🇪',
+                    'de-at': '🇦🇹',
+                    'de-ch': '🇨🇭',
+                    'ja-jp': '🇯🇵',
+                    'zh-cn': '🇨🇳',
+                    'zh-tw': '🇹🇼'
+                };
+                return map[key] || '';
+            }
+            function sanitizeVoiceName(name) {
+                if (!name) return '';
+                // Quitar "Microsoft" y etiquetas comunes sin perder el nombre
+                let s = name.replace(/^Microsoft\s+/i, '')
+                            .replace(/\b(Natural|Online|Neural|Cloud)\b/ig, '')
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                // Si contiene guión, tomar la parte antes del idioma para dejar solo el nombre
+                const m = s.match(/^([^\-\(]+)\s*(?:-|\(|$)/);
+                if (m && m[1]) s = m[1].trim();
+                return s;
+            }
+            function countryNameForLocale(locale) {
+                const key = (locale || '').toLowerCase();
+                return countryNames[key] || locale || '—';
+            }
+
+            function refreshVoices() {
+                try {
+                    availableVoices = window.speechSynthesis.getVoices();
+                } catch (_) {
+                    availableVoices = [];
+                }
+            }
+            // Inicializa y escucha cambios de voces (Edge carga voces de forma asíncrona)
+            refreshVoices();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => { refreshVoices(); updateVoiceSelect(); };
+            }
+
+            function updateVoiceSelect() {
+                if (!voiceSelect) return;
+                const selectedLanguage = languageSelect ? languageSelect.value : 'Spanish';
+                const locales = languageLocales[selectedLanguage] || [localeMap[selectedLanguage] || 'es-ES'];
+                const localesLower = locales.map(l => l.toLowerCase());
+
+                const msVoices = (availableVoices || [])
+                    .filter(v => v && v.name && v.lang)
+                    .filter(v => /microsoft/i.test(v.name))
+                    .filter(v => /(natural|online)/i.test(v.name))
+                    .filter(v => !/compact/i.test(v.name))
+                    .filter(v => localesLower.some(l => (v.lang || '').toLowerCase().startsWith(l)));
+
+                voiceSelect.innerHTML = '';
+                if (msVoices.length === 0) {
+                    voiceSelect.disabled = true;
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'No hay voces naturales de Edge';
+                    voiceSelect.appendChild(opt);
+                } else {
+                    voiceSelect.disabled = false;
+                    const placeholder = document.createElement('option');
+                    placeholder.value = '';
+                    placeholder.textContent = 'Selecciona voz (Natural)';
+                    voiceSelect.appendChild(placeholder);
+                    const score = (name) => (/(natural|online)/i.test(name) ? 2 : 0)
+                        + (/aria|alvaro|raul|dalia|elsa|denise|guy|libby|ryan|paloma|ximena|jorge|henri|giuseppe/i.test(name) ? 1 : 0);
+                    msVoices.sort((a, b) => score(b.name) - score(a.name));
+                    msVoices.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.name;
+                        const displayName = sanitizeVoiceName(v.name);
+                        const country = countryNameForLocale(v.lang);
+                        const flag = flagEmojiForLocale(v.lang);
+                        opt.textContent = `${displayName} (${country}) ${flag}`.trim();
+                        voiceSelect.appendChild(opt);
+                    });
+                    // Preselección desde localStorage por idioma
+                    try {
+                        const saved = localStorage.getItem('edgeVoice:' + selectedLanguage);
+                        if (saved) {
+                            const exists = msVoices.some(v => v.name === saved);
+                            if (exists) voiceSelect.value = saved;
+                        }
+                    } catch (_) {}
+                }
+            }
+            // Poblamos inicialmente según idioma seleccionado
+            updateVoiceSelect();
+
+            function getPreferredMicrosoftVoice(langCode) {
+                // Preferir voces de Microsoft que contengan "Natural" o "Online"
+                const isLang = (v) => (v.lang || '').toLowerCase().startsWith(langCode.toLowerCase());
+                const msVoices = availableVoices.filter(v => isLang(v) && /microsoft/i.test(v.name));
+                // Ordena por preferencia textual en el nombre
+                const sorted = msVoices.sort((a, b) => {
+                    const score = (name) => (/(natural|online)/i.test(name) ? 2 : 0) + (/aria|dalia|raul|alvaro|elsa|denise/i.test(name) ? 1 : 0);
+                    return score(b.name) - score(a.name);
+                });
+                return sorted[0] || null;
+            }
+
+            function getSelectedVoice() {
+                if (!voiceSelect || !voiceSelect.value) return null;
+                const name = voiceSelect.value;
+                return availableVoices.find(v => v.name === name) || null;
+            }
+
+            function computeEdgeVoiceIdFromSelected() {
+                const v = getSelectedVoice();
+                if (!v) return '';
+                const locale = (v.lang || '').trim();
+                const namePart = sanitizeVoiceName(v.name);
+                if (!locale || !namePart) return '';
+                return `${locale}-${namePart}Neural`;
+            }
+
+            // Guardar selección en localStorage
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', () => {
+                    const selectedLanguage = languageSelect ? languageSelect.value : 'Spanish';
+                    const val = voiceSelect.value || '';
+                    try { localStorage.setItem('edgeVoice:' + selectedLanguage, val); } catch (_) {}
+                });
+            }
+
+            function speakWithBrowser(text, lang, preferredVoice) {
+                if (!('speechSynthesis' in window)) {
+                    alert('Tu navegador no soporta lectura en voz (Web Speech).');
+                    stopAudio();
+                    return;
+                }
+                try {
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = localeMap[lang] || 'es-ES';
+                    if (preferredVoice) utter.voice = preferredVoice;
+                    utter.onend = () => { stopAudio(); };
+                    utter.onerror = () => { alert('Error al reproducir con el navegador.'); stopAudio(); };
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utter);
+                    speechUtterance = utter;
+                    speakingWithBrowser = true;
+                    readAloudButton.disabled = false;
+                    audioBtnIcon.innerHTML = iconStop;
+                    audioBtnText.textContent = 'Detener';
+                } catch (e) {
+                    alert('No se pudo iniciar la lectura con el navegador.');
+                    stopAudio();
+                }
+            }
+
             function stopAudio() {
                 if (audio) { audio.pause(); audio.currentTime = 0; audio = null; }
+                if (speakingWithBrowser) { try { window.speechSynthesis.cancel(); } catch (_) {} speakingWithBrowser = false; speechUtterance = null; }
                 audioBtnIcon.innerHTML = iconPlay;
                 audioBtnText.textContent = 'Escuchar';
                 readAloudButton.disabled = false;
@@ -284,6 +507,7 @@
 
             readAloudButton.addEventListener('click', () => {
                 if (audio && !audio.paused) { stopAudio(); return; }
+                if (speakingWithBrowser) { stopAudio(); return; }
                 const textToSpeak = summaryTextElement.textContent;
                 const selectedLanguage = languageSelect.value;
                 const encodedText = encodeURIComponent(textToSpeak);
@@ -291,12 +515,39 @@
                 readAloudButton.disabled = true;
                 audioBtnIcon.innerHTML = iconLoading;
                 audioBtnText.textContent = 'Cargando';
+
+                // Si el usuario seleccionó una voz de Edge, usar navegador directamente
+                const selectedVoice = getSelectedVoice();
+                if (selectedVoice) {
+                    speakWithBrowser(textToSpeak, selectedLanguage, selectedVoice);
+                    return;
+                }
+
+                // 1) Intentar primero el audio del servidor (Edge TTS)
                 audio = new Audio(`/speak?text=${encodedText}&lang=${encodedLang}`);
                 audio.addEventListener('canplaythrough', () => { if (audio) audio.play(); });
                 audio.addEventListener('play', () => { readAloudButton.disabled = false; audioBtnIcon.innerHTML = iconStop; audioBtnText.textContent = 'Detener'; });
                 audio.addEventListener('ended', stopAudio);
-                audio.addEventListener('error', () => { alert('Error al cargar el audio.'); stopAudio(); });
+                audio.addEventListener('error', () => {
+                    // 2) Fallback: voces del navegador (preferir Microsoft Natural)
+                    refreshVoices();
+                    const preferredVoice = getSelectedVoice() || getPreferredMicrosoftVoice(localeMap[selectedLanguage] || 'es-ES');
+                    if (preferredVoice) {
+                        speakWithBrowser(textToSpeak, selectedLanguage, preferredVoice);
+                        return;
+                    }
+                    // 3) Fallback final: cualquier voz del navegador que coincida con el idioma
+                    const anyLangVoice = availableVoices.find(v => (v.lang || '').toLowerCase().startsWith((localeMap[selectedLanguage] || 'es-ES').toLowerCase()));
+                    speakWithBrowser(textToSpeak, selectedLanguage, anyLangVoice || null);
+                });
             });
+
+            // Actualizar voces mostradas al cambiar idioma
+            if (languageSelect) {
+                languageSelect.addEventListener('change', () => {
+                    updateVoiceSelect();
+                });
+            }
         }
         
         const copyBtn = document.getElementById('copy-summary-btn');
@@ -311,19 +562,101 @@
         }
 
         const downloadBtn = document.getElementById('download-audio-btn');
+        const downloadStatus = document.getElementById('download-status');
+        const ttsProvider = document.getElementById('tts-provider');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
+            // Pre-chequeo de disponibilidad del servidor TTS y actualización del estado del botón
+            async function updateDownloadAvailability() {
+                try {
+                    const textToSpeak = (summaryTextElement && summaryTextElement.textContent) ? summaryTextElement.textContent : 'Prueba';
+                    const selectedLanguage = (languageSelect && languageSelect.value) ? languageSelect.value : 'Spanish';
+                    const encodedText = encodeURIComponent(textToSpeak.slice(0, 100));
+                    const encodedLang = encodeURIComponent(selectedLanguage);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3500);
+                    const selectedVoiceId = computeEdgeVoiceIdFromSelected();
+                    const url = selectedVoiceId ? `/download_audio?text=${encodedText}&lang=${encodedLang}&voice=${encodeURIComponent(selectedVoiceId)}` : `/download_audio?text=${encodedText}&lang=${encodedLang}`;
+                    const resp = await fetch(url, { method: 'GET', cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (resp.ok) {
+                        // Dejar siempre el botón habilitado: activamos la descarga
+                        downloadBtn.disabled = false;
+                        if (downloadStatus) { downloadStatus.style.display = 'none'; }
+                        const provider = resp.headers.get('X-TTS-Provider') || 'Edge';
+                        if (ttsProvider) {
+                            ttsProvider.style.color = '#10b981';
+                            ttsProvider.textContent = `Proveedor TTS: ${provider}`;
+                        }
+                    } else {
+                        // Mantener el botón habilitado para permitir reintentos
+                        downloadBtn.disabled = false;
+                        if (downloadStatus) { downloadStatus.style.display = 'inline'; downloadStatus.textContent = 'Servidor TTS no disponible'; }
+                        if (ttsProvider) {
+                            ttsProvider.style.color = '#ef4444';
+                            ttsProvider.textContent = 'Proveedor TTS: no disponible';
+                        }
+                    }
+                } catch (e) {
+                    // Mantener el botón habilitado para permitir reintentos
+                    downloadBtn.disabled = false;
+                    if (downloadStatus) { downloadStatus.style.display = 'inline'; downloadStatus.textContent = 'Servidor TTS no disponible'; }
+                    if (ttsProvider) {
+                        ttsProvider.style.color = '#ef4444';
+                        ttsProvider.textContent = 'Proveedor TTS: no disponible';
+                    }
+                }
+            }
+
+            // Lanzar chequeo al cargar y al cambiar de idioma
+            updateDownloadAvailability();
+            if (languageSelect) {
+                languageSelect.addEventListener('change', () => {
+                    updateDownloadAvailability();
+                });
+            }
+
+            const downloadBtnIcon = document.getElementById('download-btn-icon');
+            const downloadBtnText = document.getElementById('download-btn-text');
+            downloadBtn.addEventListener('click', async () => {
+                const originalIcon = downloadBtnIcon ? downloadBtnIcon.innerHTML : '';
+                const originalText = downloadBtnText ? downloadBtnText.textContent : '';
+
                 const textToSpeak = summaryTextElement.textContent;
                 const selectedLanguage = languageSelect.value;
                 const encodedText = encodeURIComponent(textToSpeak);
                 const encodedLang = encodeURIComponent(selectedLanguage);
-                const downloadUrl = `/download_audio?text=${encodedText}&lang=${encodedLang}`;
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = 'resumen.mp3';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const selectedVoiceId = computeEdgeVoiceIdFromSelected();
+                const downloadUrl = selectedVoiceId ? `/download_audio?text=${encodedText}&lang=${encodedLang}&voice=${encodeURIComponent(selectedVoiceId)}` : `/download_audio?text=${encodedText}&lang=${encodedLang}`;
+
+                // Mostrar estado de carga
+                downloadBtn.disabled = true;
+                if (downloadBtnIcon) downloadBtnIcon.innerHTML = '<div class="spinner"></div>';
+                if (downloadBtnText) downloadBtnText.textContent = 'Descargando...';
+
+                try {
+                    const resp = await fetch(downloadUrl, { method: 'GET' });
+                    if (!resp.ok) {
+                        throw new Error(`HTTP ${resp.status}`);
+                    }
+                    const blob = await resp.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'resumen.mp3';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    alert('No se pudo descargar el audio. El servidor devolvió un error. Puedes usar "Escuchar" con voces de Edge en el navegador o comprobar la conexión del servidor.');
+                    // Mantener el botón deshabilitado y mostrar estado si el servidor falla
+                    downloadBtn.disabled = true;
+                    if (downloadStatus) { downloadStatus.style.display = 'inline'; downloadStatus.textContent = 'Servidor TTS no disponible'; }
+                } finally {
+                    // Restaurar estado de botón
+                    if (downloadBtnIcon) downloadBtnIcon.innerHTML = originalIcon;
+                    if (downloadBtnText) downloadBtnText.textContent = originalText || 'Descargar';
+                }
             });
         }
     });
