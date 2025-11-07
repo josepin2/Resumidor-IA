@@ -4,6 +4,10 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Ollama](https://img.shields.io/badge/Powered%20by-Ollama-FFD43B.svg)
 ![Gemma](https://img.shields.io/badge/Model-Gemma%203%2012B%20IT%20QAT-7950F3.svg)
+![GitHub stars](https://img.shields.io/github/stars/josepin2/Resumidor-IA)
+![GitHub forks](https://img.shields.io/github/forks/josepin2/Resumidor-IA)
+![GitHub issues](https://img.shields.io/github/issues/josepin2/Resumidor-IA)
+![GitHub downloads](https://img.shields.io/github/downloads/josepin2/Resumidor-IA/total)
 
 Aplicación web que transforma textos extensos en resúmenes concisos y los convierte a voz natural en múltiples idiomas. Ideal para estudiantes, investigadores o cualquiera que necesite procesar información rápidamente. La aplicación puede extraer contenido directamente de URLs o procesar texto ingresado manualmente, ofreciendo una experiencia auditiva en el idioma de tu preferencia.
 
