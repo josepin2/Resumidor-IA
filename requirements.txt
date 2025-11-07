@@ -1,6 +1,12 @@
+# Requisitos de la aplicación (Python 3.8+)
 flask[async]==3.0.2
 edge-tts==6.1.5
 requests==2.32.3
 beautifulsoup4==4.12.3
 ollama==0.2.1
 gTTS==2.5.1
+
+# Nota: Azure Speech es opcional y se usa vía API HTTP,
+# no requiere paquetes adicionales. Configure:
+# - AZURE_SPEECH_KEY
+# - AZURE_SPEECH_REGION
