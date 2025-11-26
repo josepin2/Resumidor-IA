@@ -138,3 +138,9 @@ Versión `v1.1.0` — 2025-11-07
   - `/download_audio`: descarga del audio (Edge TTS; fallback a gTTS).
 - Documentación mejorada en README y notas en `requirements.txt`.
 - UI renovada con nuevo diseño y selector de voz.
+
+Versión `v1.2.0` — 2025-11-26
+- Añadido botón de grabación de voz y transcripción en el navegador.
+- La transcripción usa Web Speech API y se inserta directamente en el campo de texto.
+- Mejorados los estados de la UI: iniciar/detener, spinner y manejo de errores.
+- No requiere cambios en `requirements.txt` (funciona 100% en el navegador).
