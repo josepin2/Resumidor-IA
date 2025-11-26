@@ -10,6 +10,18 @@ import io
 import os
 from gtts import gTTS
 import json
+import tempfile
+from werkzeug.utils import secure_filename
+try:
+    from mutagen.mp3 import MP3
+    HAS_MUTAGEN = True
+except Exception:
+    HAS_MUTAGEN = False
+try:
+    from faster_whisper import WhisperModel
+    HAS_ASR = True
+except Exception:
+    HAS_ASR = False
 
 app = flask.Flask(__name__)
 
@@ -26,6 +38,8 @@ VOICE_MAP = {
     "Chinese": "zh-CN-XiaoxiaoNeural"
 }
 DEFAULT_VOICE = VOICE_MAP["Spanish"]
+ASR_MODEL = None
+ASR_MODEL_SIZE = os.getenv('ASR_MODEL_SIZE', 'small')
 
 
 # --- Funciones de la App ---
@@ -60,7 +74,7 @@ def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
     if not texto_a_resumir.strip():
         return "El texto proporcionado estaba vacío.", []
     prompt = (
-        f"Traduce el texto a {idioma_destino}. Luego, escribe el resumen en primera persona (yo), tono claro y directo, sin comillas ni markdown. "
+        f"Traduce el texto a {idioma_destino}. Luego, escribe el resumen en tono neutral e impersonal (sin primera persona ni referencias en tercera persona), claro y directo, sin comillas ni markdown. "
         f"Genera exactamente 5 puntos clave. "
         f"Responde SOLO en JSON con esta forma exacta (en {idioma_destino}): {{\"summary\": \"...\", \"key_points\": [\"...\", \"...\", \"...\", \"...\", \"...\"]}}. "
         f"No añadas nada fuera del JSON.\n\n--- TEXTO ---\n{texto_a_resumir}\n--- FIN ---"
@@ -97,6 +111,25 @@ def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
     except Exception as e:
         return f"Error conectando con Ollama: {e}", []
 
+def map_lang_to_whisper(lang):
+    m = {
+        "Spanish": "es",
+        "English": "en",
+        "French": "fr",
+        "Italian": "it",
+        "Portuguese": "pt",
+        "German": "de",
+        "Japanese": "ja",
+        "Chinese": "zh"
+    }
+    return m.get(lang, "es")
+
+def get_asr_model():
+    global ASR_MODEL
+    if ASR_MODEL is None and HAS_ASR:
+        ASR_MODEL = WhisperModel(ASR_MODEL_SIZE, device="cpu", compute_type="int8")
+    return ASR_MODEL
+
 # --- Rutas de Flask ---
 
 @app.route('/', methods=['GET', 'POST'])
@@ -132,6 +165,43 @@ def index():
                                  resumen=resumen, 
                                  puntos_clave=puntos_clave,
                                  idioma_seleccionado=idioma_seleccionado)
+
+@app.route('/transcribe_audio', methods=['POST'])
+def transcribe_audio():
+    if not HAS_ASR:
+        return flask.jsonify({"error": "ASR no disponible. Instala faster-whisper y ffmpeg."}), 500
+    f = flask.request.files.get('audio')
+    if not f:
+        return flask.jsonify({"error": "Archivo no proporcionado"}), 400
+    filename = secure_filename(f.filename or "")
+    if not filename.lower().endswith('.mp3'):
+        return flask.jsonify({"error": "Formato no soportado. Solo MP3."}), 400
+    fd, tmp_path = tempfile.mkstemp(suffix='.mp3')
+    os.close(fd)
+    try:
+        f.save(tmp_path)
+        if not HAS_MUTAGEN:
+            return flask.jsonify({"error": "Validación de duración requiere 'mutagen'. Ejecuta pip install -r requirements.txt"}), 500
+        audio = MP3(tmp_path)
+        duration = getattr(audio.info, 'length', 0)
+        if duration and duration > 300:
+            return flask.jsonify({"error": "Duración máxima 5 minutos"}), 400
+        lang = flask.request.form.get('language', 'Spanish')
+        lang_code = map_lang_to_whisper(lang)
+        model = get_asr_model()
+        if model is None:
+            return flask.jsonify({"error": "No se pudo inicializar el modelo ASR"}), 500
+        segments, info = model.transcribe(tmp_path, language=lang_code)
+        text = " ".join([s.text.strip() for s in segments])
+        return flask.jsonify({"transcription": text})
+    except Exception as e:
+        return flask.jsonify({"error": str(e)}), 500
+    finally:
+        try:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
 
 
 async def generate_audio_for(text, lang, voice_id=None):

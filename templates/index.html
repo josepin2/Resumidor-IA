@@ -23,6 +23,7 @@
             --card-background: rgba(255, 255, 255, 0.75);
             --border-color: rgba(255, 255, 255, 0.3);
             --shadow-color: rgba(0, 0, 0, 0.1);
+            --muted: #6b7280;
         }
 
         *, *::before, *::after {
@@ -51,14 +52,14 @@
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             background: var(--card-background);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 1.5rem;
             border: 1px solid var(--border-color);
-            padding: 3rem;
-            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            padding: 3.25rem;
+            box-shadow: 0 12px 40px 0 var(--shadow-color);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -80,7 +81,7 @@
             margin-top: 0.5rem;
         }
 
-        .form-group { margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.25rem; }
         .form-group label {
             display: block;
             font-weight: 600;
@@ -174,6 +175,18 @@
         }
         .btn-audio { background-color: var(--secondary-color); }
         .btn-audio:hover:not(:disabled) { background-color: var(--secondary-hover); }
+
+        .form-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
+        .form-actions .btn { width: 100%; flex: 1 1 220px; }
+        .actions-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+        .actions-grid .btn { width: 100%; }
+        .upload-row { display: flex; gap: 1rem; align-items: center; }
+        .upload-filename { color: var(--muted); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .resultado { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; }
+        .resultado h2 { margin-bottom: 0.75rem; }
+        #key-points { line-height: 1.6; }
+        #key-points li { margin: 0.25rem 0; }
     </style>
 </head>
 <body>
@@ -187,6 +200,21 @@
             <div class="form-group">
                 <label for="texto">Introduce tu contenido o URL</label>
                 <textarea name="texto" id="texto" placeholder="Pega aquí un artículo completo o una URL como https://es.wikipedia.org/wiki/Inteligencia_artificial">{{ texto_original }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="audio-upload">Subir audio (MP3, ≤ 5 min)</label>
+                <input type="file" id="audio-upload" accept="audio/mpeg, audio/mp3" hidden />
+                <div class="actions-grid" style="margin-top:0.5rem">
+                    <button type="button" class="btn btn-action" id="select-audio-btn">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 15V3"/></svg></span>
+                        <span>Seleccionar audio</span>
+                    </button>
+                    <button type="button" class="btn btn-action" id="transcribe-audio-btn">
+                        <span id="transcribe-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5h4v14h-4"/><path d="M3 5h4v14H3"/></svg></span>
+                        <span id="transcribe-btn-text">Transcribir audio</span>
+                    </button>
+                </div>
+                <div class="upload-filename" id="selected-audio-name" style="margin-top:0.25rem">Ningún archivo seleccionado</div>
             </div>
             <div class="form-group">
                 <button type="button" class="btn btn-action" id="record-voice-btn">
@@ -209,10 +237,16 @@
                 </select>
             </div>
             
-            <button type="submit" class="btn btn-primary" id="summarize-btn">
-                <span id="summarize-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.7 4.3a9 9 0 1 0-7.4 15.4"/><path d="m15.7 4.3 2.1 2.1"/><path d="M8.2 12.8 12 18l6-8"/><path d="m12.5 7.5-1-1"/></svg></span>
-                <span id="summarize-btn-text">Crear Resumen</span>
-            </button>
+            <div class="actions-grid">
+                <button type="submit" class="btn btn-primary" id="summarize-btn">
+                    <span id="summarize-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.7 4.3a9 9 0 1 0-7.4 15.4"/><path d="m15.7 4.3 2.1 2.1"/><path d="M8.2 12.8 12 18l6-8"/><path d="m12.5 7.5-1-1"/></svg></span>
+                    <span id="summarize-btn-text">Crear Resumen</span>
+                </button>
+                <button type="button" class="btn btn-action" id="clear-fields-btn">
+                    <span id="clear-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6l1-3h4l1 3"/></svg></span>
+                    <span id="clear-btn-text">Limpiar</span>
+                </button>
+            </div>
         </form>
 
         {% if resumen %}
@@ -674,6 +708,42 @@
             });
         }
 
+        const clearBtn = document.getElementById('clear-fields-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                const mainTextarea = document.getElementById('texto');
+                const languageSelect = document.getElementById('language');
+                const summarizeBtn = document.getElementById('summarize-btn');
+                const summarizeIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.7 4.3a9 9 0 1 0-7.4 15.4"/><path d="m15.7 4.3 2.1 2.1"/><path d="M8.2 12.8 12 18l6-8"/><path d="m12.5 7.5-1-1"/></svg>';
+                if (mainTextarea) {
+                    mainTextarea.value = '';
+                    mainTextarea.readOnly = false;
+                    mainTextarea.classList.remove('is-processing');
+                }
+                if (languageSelect) {
+                    languageSelect.value = 'Spanish';
+                    languageSelect.classList.remove('is-processing');
+                }
+                const resultEl = document.querySelector('.resultado');
+                if (resultEl) {
+                    resultEl.remove();
+                }
+                const voiceSelect = document.getElementById('edge-voice');
+                if (voiceSelect) {
+                    voiceSelect.innerHTML = '<option value="">Cargando voces…</option>';
+                    voiceSelect.disabled = true;
+                }
+                try { window.speechSynthesis.cancel(); } catch (_) {}
+                if (summarizeBtn) {
+                    const iconSpan = summarizeBtn.querySelector('#summarize-btn-icon');
+                    const textSpan = summarizeBtn.querySelector('#summarize-btn-text');
+                    summarizeBtn.disabled = false;
+                    if (iconSpan) iconSpan.innerHTML = summarizeIconDefault;
+                    if (textSpan) textSpan.textContent = 'Crear Resumen';
+                }
+            });
+        }
+
         const downloadBtn = document.getElementById('download-audio-btn');
         const downloadStatus = document.getElementById('download-status');
         const ttsProvider = document.getElementById('tts-provider');
@@ -773,6 +843,53 @@
             });
         }
     });
+        const transcribeBtn = document.getElementById('transcribe-audio-btn');
+        if (transcribeBtn) {
+            const transcribeIcon = document.getElementById('transcribe-btn-icon');
+            const transcribeText = document.getElementById('transcribe-btn-text');
+            const uploadInput = document.getElementById('audio-upload');
+            const selectAudioBtn = document.getElementById('select-audio-btn');
+            const selectedNameEl = document.getElementById('selected-audio-name');
+            if (selectAudioBtn && uploadInput) { selectAudioBtn.addEventListener('click', () => { uploadInput.click(); }); }
+            if (uploadInput && selectedNameEl) {
+                uploadInput.addEventListener('change', () => {
+                    const file = uploadInput.files && uploadInput.files[0] ? uploadInput.files[0] : null;
+                    selectedNameEl.textContent = file ? (file.name || 'Archivo seleccionado') : 'Ningún archivo seleccionado';
+                });
+            }
+            transcribeBtn.addEventListener('click', async () => {
+                const fileInput = document.getElementById('audio-upload');
+                const mainTextarea = document.getElementById('texto');
+                const languageSelect = document.getElementById('language');
+                const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+                if (!file) { alert('Selecciona un archivo MP3.'); return; }
+                const name = (file.name || '').toLowerCase();
+                if (!name.endsWith('.mp3')) { alert('Formato no soportado. Solo MP3.'); return; }
+                transcribeBtn.disabled = true;
+                if (transcribeIcon) transcribeIcon.innerHTML = '<div class="spinner"></div>';
+                if (transcribeText) transcribeText.textContent = 'Transcribiendo...';
+                try {
+                    const fd = new FormData();
+                    fd.append('audio', file);
+                    fd.append('language', languageSelect ? languageSelect.value : 'Spanish');
+                    const resp = await fetch('/transcribe_audio', { method: 'POST', body: fd });
+                    const data = await resp.json();
+                    if (!resp.ok) { throw new Error(data && data.error ? data.error : 'Error transcribiendo'); }
+                    const t = (data.transcription || '').trim();
+                    if (t) {
+                        const current = mainTextarea.value || '';
+                        const base = current ? current.replace(/\s+$/, '') + ' ' : '';
+                        mainTextarea.value = (base + t).trim();
+                    }
+                } catch (e) {
+                    alert('No se pudo transcribir: ' + (e.message || e));
+                } finally {
+                    transcribeBtn.disabled = false;
+                    if (transcribeIcon) transcribeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5h4v14h-4"/><path d="M3 5h4v14H3"/></svg>';
+                    if (transcribeText) transcribeText.textContent = 'Transcribir audio';
+                }
+            });
+        }
     </script>
 </body>
 </html>

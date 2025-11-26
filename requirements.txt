@@ -5,6 +5,8 @@ requests==2.32.3
 beautifulsoup4==4.12.3
 ollama==0.2.1
 gTTS==2.5.1
+faster-whisper==1.0.0
+mutagen==1.47.0
 
 # Nota: Azure Speech es opcional y se usa vía API HTTP,
 # no requiere paquetes adicionales. Configure:
