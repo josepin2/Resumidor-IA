@@ -21,6 +21,7 @@ Aplicación web que transforma textos extensos en resúmenes concisos y los conv
 - **Múltiples formatos de entrada**:
   - Texto directo
   - Extracción de contenido desde URL
+  - Subida de audio MP3 (≤ 5 min) para transcribir y resumir
 - Interfaz web intuitiva y fácil de usar
 - Reproducción y descarga de audio directamente desde el navegador
 - Selección de voz (Edge TTS) cuando esté disponible
