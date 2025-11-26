@@ -144,3 +144,13 @@ Versión `v1.2.0` — 2025-11-26
 - La transcripción usa Web Speech API y se inserta directamente en el campo de texto.
 - Mejorados los estados de la UI: iniciar/detener, spinner y manejo de errores.
 - No requiere cambios en `requirements.txt` (funciona 100% en el navegador).
+
+Versión `v1.3.0` — 2025-11-26
+- Puntos clave: generación con Ollama (exactamente 5) y renderizado en UI.
+- Resumen en tono neutral e impersonal, sin primera/tercera persona.
+- Botón “Copiar” incluye resumen y puntos clave.
+- Subida y transcripción de audio MP3 (≤ 5 min) con `faster-whisper` en CPU.
+- Validación de duración con `mutagen`; requiere `ffmpeg` instalado y en `PATH`.
+- Manejo seguro de archivos temporales en Windows (sin bloqueo de ficheros).
+- Nuevo botón “Limpiar” para resetear campos y estado.
+- Diseño pulido: rejilla de acciones, anchos unificados y selector moderno de audio.
