@@ -9,6 +9,7 @@ import edge_tts
 import io
 import os
 from gtts import gTTS
+import json
 
 app = flask.Flask(__name__)
 
@@ -57,22 +58,26 @@ def extraer_texto_de_url(url):
 
 def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
     if not texto_a_resumir.strip():
-        return "El texto proporcionado estaba vacío."
-    
+        return "El texto proporcionado estaba vacío.", []
     prompt = (
-        f"IMPORTANT: First, translate the following text into {idioma_destino}. "
-        f"Then, summarize the translated text in a single, concise paragraph, also in {idioma_destino}. "
-        f"Provide ONLY the final summary in {idioma_destino}."
-        f"\n\n--- TEXT TO PROCESS ---\n{texto_a_resumir}\n--- END OF TEXT ---"
+        f"Traduce el texto a {idioma_destino} y produce un resumen breve y 5-8 puntos clave. "
+        f"Responde SOLO en JSON con la forma: {{\"summary\": \"...\", \"key_points\": [\"...\"]}} en {idioma_destino}. "
+        f"No añadas texto fuera del JSON.\n\n--- TEXTO ---\n{texto_a_resumir}\n--- FIN ---"
     )
-
     try:
-        print(f"Generando resumen en {idioma_destino}...")
         response = ollama.chat(model=MODELO_OLLAMA, messages=[{'role': 'user', 'content': prompt}])
-        return response['message']['content']
+        content = response.get('message', {}).get('content', '')
+        try:
+            data = json.loads(content)
+            summary = (data.get('summary') or '').strip()
+            key_points = data.get('key_points') or []
+            if isinstance(key_points, str):
+                key_points = [kp.strip() for kp in re.split(r"[\n;•\-]+", key_points) if kp.strip()]
+            return summary or content, key_points
+        except Exception:
+            return content, []
     except Exception as e:
-        print(f"Error conectando con Ollama: {e}")
-        return f"Error conectando con Ollama: {e}"
+        return f"Error conectando con Ollama: {e}", []
 
 # --- Rutas de Flask ---
 
@@ -80,6 +85,7 @@ def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
 def index():
     # Inicializamos las variables fuera del bloque if
     resumen = ""
+    puntos_clave = []
     texto_original = ""
     idioma_seleccionado = "Spanish"  # Valor por defecto
 
@@ -97,7 +103,7 @@ def index():
                 print("Detectado texto plano.")
                 texto_a_resumir = texto_original
             
-            resumen = generar_resumen_con_ollama(texto_a_resumir, idioma_seleccionado)
+            resumen, puntos_clave = generar_resumen_con_ollama(texto_a_resumir, idioma_seleccionado)
         else:
             # Opcional: podrías mostrar un mensaje de error si el texto está vacío
             print("El formulario se envió con el campo de texto vacío.")
@@ -106,6 +112,7 @@ def index():
     return flask.render_template('index.html', 
                                  texto_original=texto_original, 
                                  resumen=resumen, 
+                                 puntos_clave=puntos_clave,
                                  idioma_seleccionado=idioma_seleccionado)
 
 

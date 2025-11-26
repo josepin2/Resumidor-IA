@@ -219,6 +219,14 @@
         <div class="resultado">
             <h2>Tu Resumen Inteligente</h2>
             <p id="summary-text">{{ resumen }}</p>
+            {% if puntos_clave and puntos_clave|length > 0 %}
+            <h2>Puntos clave</h2>
+            <ul id="key-points" style="background:#f9fafb;padding:1rem;border-radius:0.75rem;border:1px solid #e5e7eb;">
+                {% for punto in puntos_clave %}
+                <li>{{ punto }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             <div class="form-group" id="voice-select-group">
                 <label for="edge-voice">Voz (Edge)</label>
                 <select id="edge-voice" class="edge-voice-select" disabled>
