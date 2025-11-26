@@ -187,7 +187,7 @@
         .resultado h2 { margin-bottom: 0.75rem; }
         #key-points { line-height: 1.6; }
         #key-points li { margin: 0.25rem 0; }
-        .info-banner { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 1rem; }
+        .info-banner { display: flex; align-items: center; gap: 0.5rem; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -196,7 +196,10 @@
             <h1>Resumidor AI Pro</h1>
             <p>Transforma información en conocimiento al instante.</p>
         </header>
-        <div class="info-banner">Acepta archivos MP3 de hasta 5 minutos para transcribir y resumir automáticamente.</div>
+        <div class="info-banner">
+            <span aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5l6 4-6 4V5z"/><rect x="3" y="4" width="4" height="16" rx="2"/></svg></span>
+            <span>Acepta archivos MP3 de hasta 5 minutos para transcribir y resumir automáticamente.</span>
+        </div>
 
         <form id="summarize-form" action="/" method="post">
             <div class="form-group">
