@@ -188,6 +188,12 @@
                 <label for="texto">Introduce tu contenido o URL</label>
                 <textarea name="texto" id="texto" placeholder="Pega aquí un artículo completo o una URL como https://es.wikipedia.org/wiki/Inteligencia_artificial">{{ texto_original }}</textarea>
             </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-action" id="record-voice-btn">
+                    <span id="record-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"></rect><path d="M12 14v7"></path><path d="M19 11a7 7 0 0 1-14 0"></path></svg></span>
+                    <span id="record-btn-text">Hablar</span>
+                </button>
+            </div>
             
             <div class="form-group">
                 <label for="language">Generar resumen en:</label>
@@ -271,6 +277,97 @@
                 mainLanguageSelect.classList.add('is-processing');
                 summarizeBtn.querySelector('#summarize-btn-text').textContent = 'Generando...';
                 summarizeBtn.querySelector('#summarize-btn-icon').innerHTML = '<div class="spinner"></div>';
+            });
+        }
+
+        const recordBtn = document.getElementById('record-voice-btn');
+        if (recordBtn) {
+            const mainTextarea = document.getElementById('texto');
+            const languageSelect = document.getElementById('language');
+            const iconMic = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"></rect><path d="M12 14v7"></path><path d="M19 11a7 7 0 0 1-14 0"></path></svg>';
+            const iconStop = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"></rect></svg>';
+            const iconLoading = '<div class="spinner"></div>';
+            const recordBtnIcon = document.getElementById('record-btn-icon');
+            const recordBtnText = document.getElementById('record-btn-text');
+            let recognition = null;
+            let isRecording = false;
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const localeMap = { 'Spanish': 'es-ES', 'English': 'en-US', 'French': 'fr-FR', 'Italian': 'it-IT', 'Portuguese': 'pt-BR', 'German': 'de-DE', 'Japanese': 'ja-JP', 'Chinese': 'zh-CN' };
+
+            function stopRecognition() {
+                try {
+                    if (recognition) {
+                        if (typeof recognition.abort === 'function') { recognition.abort(); } else { recognition.stop(); }
+                        recognition.onresult = null;
+                        recognition.onerror = null;
+                        recognition.onend = null;
+                        recognition.onspeechend = null;
+                    }
+                } catch (_) {}
+                recognition = null;
+                isRecording = false;
+                recordBtnIcon.innerHTML = iconMic;
+                recordBtnText.textContent = 'Hablar';
+            }
+
+            async function ensureMicPermission() {
+                try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (_) {}
+            }
+
+            function startRecognition() {
+                if (!SR) {
+                    alert('Tu navegador no soporta transcripción de voz. Usa Chrome/Edge en escritorio.');
+                    recordBtn.disabled = false;
+                    recordBtnIcon.innerHTML = iconMic;
+                    recordBtnText.textContent = 'Hablar';
+                    return;
+                }
+                try {
+                    recognition = new SR();
+                    recognition.lang = localeMap[(languageSelect && languageSelect.value) || 'Spanish'] || 'es-ES';
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
+                    recognition.maxAlternatives = 1;
+                    isRecording = true;
+                    recordBtn.disabled = false;
+                    recordBtnIcon.innerHTML = iconStop;
+                    recordBtnText.textContent = 'Detener';
+                    recognition.onstart = () => {
+                        recordBtn.disabled = false;
+                    };
+                    recognition.onresult = (event) => {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const res = event.results[i];
+                            if (res.isFinal) {
+                                const t = res[0].transcript.trim();
+                                const current = mainTextarea.value || '';
+                                const base = current ? current.replace(/\s+$/, '') + ' ' : '';
+                                mainTextarea.value = (base + t).trim();
+                            }
+                        }
+                    };
+                    recognition.onerror = () => { alert('Error en la transcripción.'); stopRecognition(); };
+                    recognition.onend = () => { stopRecognition(); };
+                    recognition.onspeechend = () => { stopRecognition(); };
+                    recognition.start();
+                    setTimeout(() => { if (isRecording) { recordBtn.disabled = false; } }, 800);
+                } catch (_) {
+                    alert('No se pudo iniciar la transcripción.');
+                    stopRecognition();
+                }
+            }
+
+            recordBtn.addEventListener('click', async () => {
+                if (isRecording) {
+                    recordBtnIcon.innerHTML = iconLoading;
+                    recordBtnText.textContent = 'Deteniendo...';
+                    stopRecognition();
+                    return;
+                }
+                recordBtnIcon.innerHTML = iconLoading;
+                recordBtnText.textContent = 'Escuchando...';
+                await ensureMicPermission();
+                startRecognition();
             });
         }
         
