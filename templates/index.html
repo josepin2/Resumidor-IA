@@ -221,7 +221,7 @@
             <p id="summary-text">{{ resumen }}</p>
             {% if puntos_clave and puntos_clave|length > 0 %}
             <h2>Puntos clave</h2>
-            <ul id="key-points" style="background:#f9fafb;padding:1rem;border-radius:0.75rem;border:1px solid #e5e7eb;">
+            <ul id="key-points" style="background:#f9fafb;padding:1rem 1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-top:1rem;margin-bottom:1rem;list-style-position: inside;">
                 {% for punto in puntos_clave %}
                 <li>{{ punto }}</li>
                 {% endfor %}
@@ -658,11 +658,19 @@
         const copyBtn = document.getElementById('copy-summary-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(summaryTextElement.textContent).then(() => {
+                const keyPointsList = document.getElementById('key-points');
+                let text = summaryTextElement ? (summaryTextElement.textContent || '').trim() : '';
+                if (keyPointsList) {
+                    const items = Array.from(keyPointsList.querySelectorAll('li')).map(li => (li.textContent || '').trim()).filter(Boolean);
+                    if (items.length) {
+                        text += '\n\nPuntos clave:\n' + items.map(i => '- ' + i).join('\n');
+                    }
+                }
+                navigator.clipboard.writeText(text).then(() => {
                     const originalText = copyBtn.querySelector('span:last-child').textContent;
                     copyBtn.querySelector('span:last-child').textContent = '¡Copiado!';
                     setTimeout(() => { copyBtn.querySelector('span:last-child').textContent = originalText; }, 2000);
-                }).catch(err => { alert('No se pudo copiar el texto.'); });
+                }).catch(() => { alert('No se pudo copiar el texto.'); });
             });
         }
 

@@ -60,20 +60,38 @@ def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
     if not texto_a_resumir.strip():
         return "El texto proporcionado estaba vacío.", []
     prompt = (
-        f"Traduce el texto a {idioma_destino} y produce un resumen breve y 5-8 puntos clave. "
-        f"Responde SOLO en JSON con la forma: {{\"summary\": \"...\", \"key_points\": [\"...\"]}} en {idioma_destino}. "
-        f"No añadas texto fuera del JSON.\n\n--- TEXTO ---\n{texto_a_resumir}\n--- FIN ---"
+        f"Traduce el texto a {idioma_destino}. Luego, escribe el resumen en primera persona (yo), tono claro y directo, sin comillas ni markdown. "
+        f"Genera exactamente 5 puntos clave. "
+        f"Responde SOLO en JSON con esta forma exacta (en {idioma_destino}): {{\"summary\": \"...\", \"key_points\": [\"...\", \"...\", \"...\", \"...\", \"...\"]}}. "
+        f"No añadas nada fuera del JSON.\n\n--- TEXTO ---\n{texto_a_resumir}\n--- FIN ---"
     )
+
+    def _clean_text(s):
+        s = (s or "").strip()
+        if s.startswith('```'):
+            s = re.sub(r"^```[a-zA-Z]*\n?", "", s)
+            s = re.sub(r"\n?```$", "", s)
+        if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+            s = s[1:-1].strip()
+        return s
     try:
         response = ollama.chat(model=MODELO_OLLAMA, messages=[{'role': 'user', 'content': prompt}])
         content = response.get('message', {}).get('content', '')
+        s = (content or '').strip()
+        if s.startswith('```'):
+            m = re.search(r"\{[\s\S]*\}", s)
+            if m:
+                s = m.group(0)
         try:
-            data = json.loads(content)
-            summary = (data.get('summary') or '').strip()
-            key_points = data.get('key_points') or []
+            data = json.loads(s)
+            summary = _clean_text(data.get('summary') or data.get('resumen') or '')
+            key_points = data.get('key_points') or data.get('puntos_clave') or data.get('puntos') or []
             if isinstance(key_points, str):
                 key_points = [kp.strip() for kp in re.split(r"[\n;•\-]+", key_points) if kp.strip()]
-            return summary or content, key_points
+            key_points = [_clean_text(kp) for kp in key_points if isinstance(kp, str) and kp.strip()]
+            if len(key_points) > 5:
+                key_points = key_points[:5]
+            return summary or s, key_points
         except Exception:
             return content, []
     except Exception as e:
