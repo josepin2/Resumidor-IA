@@ -74,8 +74,9 @@ def generar_resumen_con_ollama(texto_a_resumir, idioma_destino):
     if not texto_a_resumir.strip():
         return "El texto proporcionado estaba vacío.", []
     prompt = (
-        f"Traduce el texto a {idioma_destino}. Luego, escribe el resumen en tono neutral e impersonal (sin primera persona ni referencias en tercera persona), claro y directo, sin comillas ni markdown. "
-        f"Genera exactamente 5 puntos clave. "
+        f"Traduce el texto a {idioma_destino}. Luego, escribe el resumen en estilo neutral e impersonal: sin primera persona ni referencias en tercera persona y sin verbos de elocución (evita expresiones como 'el texto', 'el autor', 'se argumenta', 'dice'). "
+        f"Evita construcciones con 'Se [verbo]'; en su lugar usa formas deónticas y declarativas como 'Hay que [infinitivo]', 'Es importante [infinitivo]', 'La [noción] es clave para...'. "
+        f"Redacción clara y directa, sin comillas ni markdown. Genera exactamente 5 puntos clave. "
         f"Responde SOLO en JSON con esta forma exacta (en {idioma_destino}): {{\"summary\": \"...\", \"key_points\": [\"...\", \"...\", \"...\", \"...\", \"...\"]}}. "
         f"No añadas nada fuera del JSON.\n\n--- TEXTO ---\n{texto_a_resumir}\n--- FIN ---"
     )

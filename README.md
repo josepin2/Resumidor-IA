@@ -148,6 +148,7 @@ Versión `v1.2.0` — 2025-11-26
 Versión `v1.3.0` — 2025-11-26
 - Puntos clave: generación con Ollama (exactamente 5) y renderizado en UI.
 - Resumen en tono neutral e impersonal, sin primera/tercera persona.
+- Refinado del prompt: estilo deóntico neutral (evita “Se [verbo]”, usa “Hay que…”, “Es importante…”, “La [noción] es clave…”).
 - Botón “Copiar” incluye resumen y puntos clave.
 - Subida y transcripción de audio MP3 (≤ 5 min) con `faster-whisper` en CPU, y resumen automático del contenido transcrito.
 - Validación de duración con `mutagen`; requiere `ffmpeg` instalado y en `PATH`.
@@ -160,3 +161,9 @@ Versión `v1.3.0` — 2025-11-26
 1. Pulsa “Seleccionar audio” y elige un archivo `.mp3` (≤ 5 minutos).
 2. Pulsa “Transcribir audio”; el texto reconocido se inserta en el campo de entrada.
 3. Pulsa “Crear Resumen” para generar el resumen y los 5 puntos clave del contenido transcrito.
+
+### Estilo del resumen (neutral e impersonal)
+
+- Evita narración y fórmulas impersonales del tipo “Se enfatiza…”, “Se argumenta…”.
+- Usa formulaciones deónticas y declarativas: “Hay que [infinitivo]”, “Es importante [infinitivo]”, “La [noción] es clave…”.
+- El objetivo es entregar un contenido objetivo y útil sin atribuir voz al usuario ni al autor.
