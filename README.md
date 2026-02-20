@@ -145,7 +145,7 @@ Versión `v1.2.0` — 2025-11-26
 - Mejorados los estados de la UI: iniciar/detener, spinner y manejo de errores.
 - No requiere cambios en `requirements.txt` (funciona 100% en el navegador).
 
-Versión `v1.3.0` — 2025-11-26
+Versión `v1.3.0` — 2026-02-21
 - Puntos clave: generación con Ollama (exactamente 5) y renderizado en UI.
 - Resumen en tono neutral e impersonal, sin primera/tercera persona.
 - Refinado del prompt: estilo deóntico neutral (evita “Se [verbo]”, usa “Hay que…”, “Es importante…”, “La [noción] es clave…”).
