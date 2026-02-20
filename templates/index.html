@@ -204,7 +204,7 @@
         <form id="summarize-form" action="/" method="post">
             <div class="form-group">
                 <label for="texto">Introduce tu contenido o URL</label>
-                <textarea name="texto" id="texto" placeholder="Pega aquí un artículo completo o una URL como https://es.wikipedia.org/wiki/Inteligencia_artificial">{{ texto_original }}</textarea>
+                <textarea name="texto" id="texto" placeholder="Pega aquí un artículo completo o una URL">{{ texto_original }}</textarea>
             </div>
             <div class="form-group">
                 <label for="audio-upload">Subir audio (MP3, ≤ 5 min)</label>
@@ -338,6 +338,9 @@
             const recordBtnText = document.getElementById('record-btn-text');
             let recognition = null;
             let isRecording = false;
+            let existingTextBeforeRecording = '';  // Guardar texto antes de grabar
+            let voiceText = '';  // Buffer para texto de voz
+            let lastResultIndex = 0;  // Rastrear último resultado procesado
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             const localeMap = { 'Spanish': 'es-ES', 'English': 'en-US', 'French': 'fr-FR', 'Italian': 'it-IT', 'Portuguese': 'pt-BR', 'German': 'de-DE', 'Japanese': 'ja-JP', 'Chinese': 'zh-CN' };
 
@@ -369,6 +372,9 @@
                     recordBtnText.textContent = 'Hablar';
                     return;
                 }
+                voiceText = '';
+                lastResultIndex = 0;  // Resetear índice al iniciar
+                existingTextBeforeRecording = mainTextarea.value || '';  // Guardar texto antes de grabar
                 try {
                     recognition = new SR();
                     recognition.lang = localeMap[(languageSelect && languageSelect.value) || 'Spanish'] || 'es-ES';
@@ -381,21 +387,42 @@
                     recordBtnText.textContent = 'Detener';
                     recognition.onstart = () => {
                         recordBtn.disabled = false;
+                        console.log('Reconocimiento de voz iniciado');
                     };
                     recognition.onresult = (event) => {
-                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                        console.log('Resultado recibido:', event);
+                        // Iterar solo resultados nuevos
+                        for (let i = lastResultIndex; i < event.results.length; i++) {
                             const res = event.results[i];
                             if (res.isFinal) {
                                 const t = res[0].transcript.trim();
-                                const current = mainTextarea.value || '';
-                                const base = current ? current.replace(/\s+$/, '') + ' ' : '';
-                                mainTextarea.value = (base + t).trim();
+                                console.log('Transcripción final:', t);
+                                // Concatenar al buffer de voz
+                                voiceText += (voiceText ? ' ' : '') + t;
+                                // Mostrar: texto existente antes de grabar + texto de voz
+                                mainTextarea.value = existingTextBeforeRecording + (existingTextBeforeRecording.trim() ? '\n' : '') + voiceText;
                             }
+                            lastResultIndex = i + 1;  // Actualizar índice
                         }
                     };
-                    recognition.onerror = () => { alert('Error en la transcripción.'); stopRecognition(); };
-                    recognition.onend = () => { stopRecognition(); };
-                    recognition.onspeechend = () => { stopRecognition(); };
+                    recognition.onerror = (event) => {
+                        console.error('Error en reconocimiento:', event.error);
+                        let errorMsg = 'Error en la transcripción.';
+                        if (event.error === 'no-speech') {
+                            errorMsg = 'No se detectó voz. Intenta hablar más cerca del micrófono.';
+                        } else if (event.error === 'audio-capture') {
+                            errorMsg = 'No se pudo acceder al micrófono. Verifica los permisos.';
+                        } else if (event.error === 'not-allowed') {
+                            errorMsg = 'Permiso de micrófono denegado. Acepta el permiso en tu navegador.';
+                        }
+                        alert(errorMsg);
+                        stopRecognition();
+                    };
+                    recognition.onend = () => {
+                        console.log('Reconocimiento finalizado');
+                        stopRecognition();
+                    };
+                    // Eliminamos onspeechend para permitir grabación continua
                     recognition.start();
                     setTimeout(() => { if (isRecording) { recordBtn.disabled = false; } }, 800);
                 } catch (_) {
@@ -535,30 +562,29 @@
                 const locales = languageLocales[selectedLanguage] || [localeMap[selectedLanguage] || 'es-ES'];
                 const localesLower = locales.map(l => l.toLowerCase());
 
-                const msVoices = (availableVoices || [])
+                const matchingVoices = (availableVoices || [])
                     .filter(v => v && v.name && v.lang)
-                    .filter(v => /microsoft/i.test(v.name))
-                    .filter(v => /(natural|online)/i.test(v.name))
-                    .filter(v => !/compact/i.test(v.name))
                     .filter(v => localesLower.some(l => (v.lang || '').toLowerCase().startsWith(l)));
 
                 voiceSelect.innerHTML = '';
-                if (msVoices.length === 0) {
+                if (matchingVoices.length === 0) {
                     voiceSelect.disabled = true;
                     const opt = document.createElement('option');
                     opt.value = '';
-                    opt.textContent = 'No hay voces naturales de Edge';
+                    opt.textContent = 'No hay voces disponibles para este idioma';
                     voiceSelect.appendChild(opt);
                 } else {
                     voiceSelect.disabled = false;
                     const placeholder = document.createElement('option');
                     placeholder.value = '';
-                    placeholder.textContent = 'Selecciona voz (Natural)';
+                    placeholder.textContent = 'Selecciona voz';
                     voiceSelect.appendChild(placeholder);
-                    const score = (name) => (/(natural|online)/i.test(name) ? 2 : 0)
-                        + (/aria|alvaro|raul|dalia|elsa|denise|guy|libby|ryan|paloma|ximena|jorge|henri|giuseppe/i.test(name) ? 1 : 0);
-                    msVoices.sort((a, b) => score(b.name) - score(a.name));
-                    msVoices.forEach(v => {
+                    const score = (v) =>
+                        (/microsoft/i.test(v.name) ? 2 : 0) +
+                        (/(natural|online|neural|cloud)/i.test(v.name) ? 1 : 0) +
+                        (/aria|alvaro|raul|dalia|elsa|denise|guy|libby|ryan|paloma|ximena|jorge|henri|giuseppe/i.test(v.name) ? 1 : 0);
+                    matchingVoices.sort((a, b) => score(b) - score(a));
+                    matchingVoices.forEach(v => {
                         const opt = document.createElement('option');
                         opt.value = v.name;
                         const displayName = sanitizeVoiceName(v.name);
@@ -567,11 +593,10 @@
                         opt.textContent = `${displayName} (${country}) ${flag}`.trim();
                         voiceSelect.appendChild(opt);
                     });
-                    // Preselección desde localStorage por idioma
                     try {
                         const saved = localStorage.getItem('edgeVoice:' + selectedLanguage);
                         if (saved) {
-                            const exists = msVoices.some(v => v.name === saved);
+                            const exists = matchingVoices.some(v => v.name === saved);
                             if (exists) voiceSelect.value = saved;
                         }
                     } catch (_) {}
